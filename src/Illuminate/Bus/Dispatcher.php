@@ -169,19 +169,21 @@ class Dispatcher implements QueueingDispatcher
      */
     protected function pushCommandToQueue($queue, $command)
     {
+        $meta_data = isset($meta_data) ? $command->meta : '';
+
         if (isset($command->queue, $command->delay)) {
-            return $queue->laterOn($command->queue, $command->delay, $command);
+            return $queue->laterOn($command->queue, $command->delay, $command, $meta_data);
         }
 
         if (isset($command->queue)) {
-            return $queue->pushOn($command->queue, $command);
+            return $queue->pushOn($command->queue, $command, $meta_data);
         }
 
         if (isset($command->delay)) {
-            return $queue->later($command->delay, $command);
+            return $queue->later($command->delay, $command, $meta_data);
         }
 
-        return $queue->push($command);
+        return $queue->push($command, $meta_data);
     }
 
     /**

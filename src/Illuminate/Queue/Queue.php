@@ -107,7 +107,7 @@ abstract class Queue
     protected function createPayloadArray($job, $queue, $data = '')
     {
         return is_object($job)
-                    ? $this->createObjectPayload($job, $queue)
+                    ? $this->createObjectPayload($job, $queue, $data)
                     : $this->createStringPayload($job, $queue, $data);
     }
 
@@ -116,9 +116,10 @@ abstract class Queue
      *
      * @param  mixed  $job
      * @param  string  $queue
+     * @param  string  $meta
      * @return array
      */
-    protected function createObjectPayload($job, $queue)
+    protected function createObjectPayload($job, $queue, $meta)
     {
         $payload = $this->withCreatePayloadHooks($queue, [
             'displayName' => $this->getDisplayName($job),
@@ -126,18 +127,19 @@ abstract class Queue
             'maxTries' => $job->tries ?? null,
             'timeout' => $job->timeout ?? null,
             'timeoutAt' => $this->getJobExpiration($job),
-            'data' => [
-                'commandName' => $job,
-                'command' => $job,
-            ],
         ]);
-
-        return array_merge($payload, [
+        $data = [
             'data' => [
                 'commandName' => get_class($job),
                 'command' => serialize(clone $job),
-            ],
-        ]);
+            ]
+        ];
+
+        if($meta) {
+            $data['data']['meta'] = $meta;
+        }
+
+        return array_merge($payload, $data);
     }
 
     /**
